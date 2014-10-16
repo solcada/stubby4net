@@ -29,6 +29,11 @@
         /// </summary>
         string Data { get; set; }
 
+        ///<summary>
+        /// The site requests to proxy and record
+        ///</summary>
+        string Record { get; set; }
+
         /// <summary>
         /// Monitor supplied Data file for changes and reload endpoints if necessary.
         /// </summary>
@@ -38,5 +43,7 @@
         /// Prevent stubby from loggin to the console.
         /// </summary>
         bool Mute { get; set; }
+
+        string LocationToDownloadSite { get; set; }
     }
 }

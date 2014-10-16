@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using YamlDotNet.RepresentationModel;
 using stubby.Domain;
+using YamlDotNet.RepresentationModel.Serialization;
 
 namespace stubby.CLI {
 
@@ -26,6 +27,49 @@ namespace stubby.CLI {
             }
 
             return Parse(yaml);
+        }
+
+        public static void ToFile(string filename, IList<Endpoint> endpoints)
+        {
+            _fileDirectory = Path.GetDirectoryName(filename);
+
+            IList<Endpoint> endpointsToSerialize = new List<Endpoint>();
+            foreach (var endpoint in endpoints)
+            {
+                var endpointToSerialize = new Endpoint();
+                endpointToSerialize.Request = new Request
+                {
+                    File = endpoint.Request.File, // Make relative.
+                    Url = endpoint.Request.Url, // Make relative
+                    Method = endpoint.Request.Method,
+                    Query = endpoint.Request.Query,
+                    Headers = endpoint.Request.Headers,
+                    Post = endpoint.Request.Post
+                };
+
+                endpointToSerialize.Responses = new List<Response>();
+
+                foreach (var response in endpoint.Responses)
+                {
+                    var responseToSerialize = new Response
+                    {
+                        Body = response.Body, // Make relative
+                        File = response.File, // Make relative
+                        Headers = response.Headers,
+                        Latency = response.Latency,
+                        Status = response.Status
+                    };
+
+                    endpointToSerialize.Responses.Add(responseToSerialize);
+                }
+                endpointsToSerialize.Add(endpointToSerialize);
+            }
+
+            var serializer = new Serializer(SerializationOptions.JsonCompatible);
+            using (TextWriter writer = File.CreateText(filename))
+            {
+                serializer.Serialize(writer, endpointsToSerialize);
+            }
         }
 
         public static IList<Endpoint> FromString(string data) {

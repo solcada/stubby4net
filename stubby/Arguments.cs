@@ -35,6 +35,16 @@
         public bool Watch { get; set; }
 
         ///<summary>
+        /// The site requests to proxy and record
+        ///</summary>
+        public string Record { get; set; }
+
+        ///<summary>
+        /// The physical location to download a site to
+        ///</summary>
+        public string LocationToDownloadSite { get; set; }
+
+        ///<summary>
         /// Prevent stubby from logging to the console. Muted by default.
         ///</summary>
         public bool Mute { get; set; }

@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
+using System.Net.Mime;
+using stubby.CLI;
 using stubby.Domain;
 using utils = stubby.Portals.PortalUtils;
 
@@ -14,10 +16,16 @@ namespace stubby.Portals {
         private const string Name = "stubs";
         private const string UnregisteredEndoint = "is not a registered endpoint";
         private const string UnexpectedError = "unexpectedtly generated a server error";
+	    
+		private readonly string _siteToCapture;
+        private readonly string _locationToDownloadSite;
         private readonly EndpointDb _endpointDb;
         private readonly HttpListener _listener;
 
-        public Stubs(EndpointDb endpointDb) : this(endpointDb, new HttpListener()) {
+        public Stubs(EndpointDb endpointDb, string siteToCapture, string locationToDownloadSite) : this(endpointDb, new HttpListener())
+        {
+            _siteToCapture = siteToCapture;
+            _locationToDownloadSite = locationToDownloadSite;
         }
 
         public Stubs(EndpointDb endpointDb, HttpListener listener) {
@@ -45,7 +53,60 @@ namespace stubby.Portals {
         }
 
         private void ResponseHandler(HttpListenerContext context) {
-            var found = FindEndpoint(context);
+            
+			var found = FindEndpoint(context);
+
+			// Download, Return and Amend Schema (if switched on).
+            if (found == null && _siteToCapture != null)
+			{
+				var webClient = new WebClient();
+
+                var pathToSaveResponse = _locationToDownloadSite + context.Request.Url.AbsolutePath;
+				
+				var hasExtension = Path.HasExtension(context.Request.Url.AbsolutePath);
+				if (!hasExtension)
+				{
+					pathToSaveResponse = pathToSaveResponse.TrimEnd('/');
+					pathToSaveResponse = pathToSaveResponse + ".html";					
+				}
+
+				var file = new FileInfo(pathToSaveResponse);
+				if (!file.Exists)
+				{
+                    var realPath = _siteToCapture + context.Request.Url.AbsolutePath;
+                    file.Directory.Create();
+                    webClient.DownloadFile(realPath, pathToSaveResponse);
+
+                    // Add New EndPoint
+				    var request = new Request()
+				    {
+                        Url = context.Request.Url.ToString(),
+				    };
+
+				    var response = new Response()
+				    {
+				        File = pathToSaveResponse,
+				    };
+
+				    var responses = new[]
+				    {
+                        response
+				    };
+
+				    var endpoint = new Endpoint()
+				    {
+                        Request = request,
+                        Responses = responses
+				    };
+				    _endpointDb.Insert(endpoint);
+
+				    // Serialize to a file
+                    YamlParser.ToFile(_locationToDownloadSite + @"\site.yaml", _endpointDb.Fetch());
+
+				}
+
+				found = new Response {File = pathToSaveResponse, Status = (int) HttpStatusCode.OK};
+			}
 
             if(found == null) {
                 context.Response.StatusCode = (int) HttpStatusCode.NotFound;

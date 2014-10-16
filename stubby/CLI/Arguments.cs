@@ -29,6 +29,12 @@ namespace stubby.CLI {
         [Option('v', "version", HelpText = "Print stubby's version number.")]
         public bool Version { get; set; }
 
+        [Option('r', "record", HelpText = "Records and locally caches requests, while creating a site definition")]
+        public string Record { get; set; }
+
+        [Option('c', "locationToRecord", HelpText = "the physical location to record the site to")]
+        public string LocationToDownloadSite { get; set; }
+
         [HelpOption]
         public string GetUsage() {
             var help = new HelpText

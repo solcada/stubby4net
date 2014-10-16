@@ -36,7 +36,7 @@ namespace stubby {
         public Stubby(IArguments arguments) {
             _arguments = arguments ?? new Arguments { Mute = true };
             _admin = new Admin(_endpointDb);
-            _stubs = new Stubs(_endpointDb);
+            _stubs = new Stubs(_endpointDb, _arguments.Record, _arguments.LocationToDownloadSite);
 
             Out.Mute = _arguments.Mute;
             LoadEndpoints();
