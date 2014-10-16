@@ -52,7 +52,7 @@ namespace stubby.Contracts {
             return verified;
         }
 
-        private static IList<Response> VerifyResponses(IList<Response> responses){
+        private static List<Response> VerifyResponses(IList<Response> responses){
             if(responses == null || responses.Count == 0)
                 return new List<Response> { VerifyResponse(null) };
             return (from response in responses select VerifyResponse(response)).ToList();

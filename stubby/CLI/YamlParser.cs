@@ -36,25 +36,26 @@ namespace stubby.CLI {
             IList<Endpoint> endpointsToSerialize = new List<Endpoint>();
             foreach (var endpoint in endpoints)
             {
-                var endpointToSerialize = new Endpoint();
-                endpointToSerialize.Request = new Request
+                var endpointToSerialize = new Endpoint
                 {
-                    File = endpoint.Request.File, // Make relative.
-                    Url = endpoint.Request.Url, // Make relative
-                    Method = endpoint.Request.Method,
-                    Query = endpoint.Request.Query,
-                    Headers = endpoint.Request.Headers,
-                    Post = endpoint.Request.Post
+                    Request = new Request
+                    {
+                        File = endpoint.Request.File,
+                        Url = endpoint.Request.Url,
+                        Method = endpoint.Request.Method,
+                        Query = endpoint.Request.Query,
+                        Headers = endpoint.Request.Headers,
+                        Post = endpoint.Request.Post
+                    },
+                    Responses = new List<Response>()
                 };
-
-                endpointToSerialize.Responses = new List<Response>();
 
                 foreach (var response in endpoint.Responses)
                 {
                     var responseToSerialize = new Response
                     {
-                        Body = response.Body, // Make relative
-                        File = response.File, // Make relative
+                        Body = response.Body,
+                        File = response.File, 
                         Headers = response.Headers,
                         Latency = response.Latency,
                         Status = response.Status

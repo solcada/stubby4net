@@ -62,8 +62,9 @@ namespace stubby.Portals {
 				var webClient = new WebClient();
 
                 var pathToSaveResponse = _locationToDownloadSite + context.Request.Url.AbsolutePath;
-				
-				var hasExtension = Path.HasExtension(context.Request.Url.AbsolutePath);
+			    var requestAbsolutePath = context.Request.Url.AbsolutePath;
+
+                var hasExtension = Path.HasExtension(requestAbsolutePath);
 				if (!hasExtension)
 				{
 					pathToSaveResponse = pathToSaveResponse.TrimEnd('/');
@@ -80,12 +81,12 @@ namespace stubby.Portals {
                     // Add New EndPoint
 				    var request = new Request()
 				    {
-                        Url = context.Request.Url.ToString(),
+                        Url = requestAbsolutePath,
 				    };
 
 				    var response = new Response()
 				    {
-				        File = pathToSaveResponse,
+                        File = requestAbsolutePath,
 				    };
 
 				    var responses = new[]
@@ -101,7 +102,7 @@ namespace stubby.Portals {
 				    _endpointDb.Insert(endpoint);
 
 				    // Serialize to a file
-                    YamlParser.ToFile(_locationToDownloadSite + @"\site.yaml", _endpointDb.Fetch());
+                    YamlParser.ToFile(_locationToDownloadSite + @"\site.json", _endpointDb.Fetch());
 
 				}
 
