@@ -5,9 +5,11 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using stubby.CLI;
 using stubby.Domain;
 using stubby.ServiceModel;
+using stubby.ServiceModel.Mapping;
 using utils = stubby.Portals.PortalUtils;
 
 namespace stubby.Portals {
@@ -26,6 +28,7 @@ namespace stubby.Portals {
         {
             _siteToCapture = siteToCapture;
             _locationToDownloadSite = locationToDownloadSite;
+            ResponseMapper.LocationToDownloadSite = locationToDownloadSite;
         }
 
         public Stubs(EndpointDb endpointDb, HttpListener listener) {
@@ -63,33 +66,43 @@ namespace stubby.Portals {
 			{
 				var webClient = new WebClient();
 
-			    var requestFileName = "";
+			    var localFileDownloadedName = "";
                 var relativeFileName = "";
-			    var requestAbsolutePath = context.Request.Url.AbsolutePath;
 
-                var hasExtension = Path.HasExtension(requestAbsolutePath);
+                var hasExtension = Path.HasExtension(context.Request.Url.AbsolutePath);
 			    if (!hasExtension)
 			    {
-			        requestFileName = _locationToDownloadSite + context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + ".html";
-                    relativeFileName = context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + ".html";
+			        var parameterHash = "";
+			        if (!string.IsNullOrEmpty(context.Request.Url.Query))
+			        {
+			            parameterHash = Hash(context.Request.Url.Query);
+			        }
+
+			        localFileDownloadedName = _locationToDownloadSite + context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + parameterHash + ".html";
+			        relativeFileName = context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + ".html";
+			    }
+			    else
+			    {
+			        localFileDownloadedName = _locationToDownloadSite + context.Request.Url.AbsolutePath;
+			        relativeFileName = _locationToDownloadSite + context.Request.Url.AbsolutePath;
 			    }
 
-			    var file = new FileInfo(requestFileName);
+			    var file = new FileInfo(localFileDownloadedName);
 				if (!file.Exists)
 				{
                     var realPath = _siteToCapture + context.Request.Url.AbsolutePath;
                     file.Directory.Create();
-                    webClient.DownloadFile(realPath, requestFileName);
+                    webClient.DownloadFile(realPath, localFileDownloadedName);
 
                     // Add New EndPoint
 				    var request = new Request()
 				    {
-                        Url = requestAbsolutePath,
+                        Url = context.Request.Url.PathAndQuery,
 				    };
 
 				    var response = new Response()
 				    {
-                        File = relativeFileName,
+                        File = localFileDownloadedName,
 				    };
 
 				    var responses = new List<Response>
@@ -109,7 +122,7 @@ namespace stubby.Portals {
 
 				}
 
-                found = new Response { File = requestFileName, Status = (int)HttpStatusCode.OK };
+                found = new Response { File = localFileDownloadedName, Status = (int)HttpStatusCode.OK };
 			}
 
             if(found == null) {
@@ -144,12 +157,18 @@ namespace stubby.Portals {
             return found;
         }
 
-        private static void WriteResponseBody(HttpListenerContext context, Response found)
+        private void WriteResponseBody(HttpListenerContext context, Response found)
         {
             string body;
 
             try
             {
+
+                if (!found.File.Contains(_locationToDownloadSite))
+                {
+                    found.File = _locationToDownloadSite + found.File;
+                }
+
                 var extension = Path.GetExtension(found.File).ToLower();
                 var imageFormat = GetImageFormat(extension);
                 if (imageFormat != null)
@@ -229,6 +248,19 @@ namespace stubby.Portals {
 
             context.Response.Close();
             _listener.BeginGetContext(AsyncHandler, _listener);
+        }
+
+
+        private string Hash(string str)
+        {
+            byte[] bytes = new byte[str.Length * sizeof(char)];
+            System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
+
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                var hash = sha1.ComputeHash(bytes);
+                return Convert.ToBase64String(hash);
+            }
         }
     }
 }

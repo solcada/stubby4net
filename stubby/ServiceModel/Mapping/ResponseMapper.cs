@@ -6,6 +6,8 @@ namespace stubby.ServiceModel.Mapping
 {
     public class ResponseMapper
     {
+        public static string LocationToDownloadSite { get; set; }
+
         public static List<ResponseModel> Map(List<Response> responses)
         {
             var responsesModel = new List<ResponseModel>();
@@ -30,6 +32,11 @@ namespace stubby.ServiceModel.Mapping
 
         public static ResponseModel Map(Response response)
         {
+            if (!response.File.Contains(LocationToDownloadSite))
+            {
+                response.File = LocationToDownloadSite + response.File;
+            }
+
             var responseToSerialize = new ResponseModel
             {
                 Body = response.Body,
@@ -44,8 +51,10 @@ namespace stubby.ServiceModel.Mapping
 
         public static Response Map(ResponseModel response)
         {
-
-
+            if (response.File.Contains(LocationToDownloadSite))
+            {
+                response.File = response.File.Substring(LocationToDownloadSite.Length);
+            }
 
             var responseToSerialize = new Response
             {
@@ -58,5 +67,7 @@ namespace stubby.ServiceModel.Mapping
 
             return responseToSerialize;
         }
+
+        
     }
 }
