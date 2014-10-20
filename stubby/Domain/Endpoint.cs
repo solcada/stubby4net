@@ -24,7 +24,7 @@ namespace stubby.Domain {
         /// Used to generate a response to the client.
         /// </summary>
         [DataMember]
-        public IList<Response> Responses { get; set; }
+        public List<Response> Responses { get; set; }
 
         public override int GetHashCode() {
             unchecked {

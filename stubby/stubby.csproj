@@ -93,6 +93,12 @@
     <Compile Include="Portals\PortalUtils.cs" />
     <Compile Include="Portals\Stubs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceModel\EndPointModel.cs" />
+    <Compile Include="ServiceModel\Mapping\NameValueCollectionMapper.cs" />
+    <Compile Include="ServiceModel\Mapping\RequestMapper.cs" />
+    <Compile Include="ServiceModel\Mapping\ResponseMapper.cs" />
+    <Compile Include="ServiceModel\RequestModel.cs" />
+    <Compile Include="ServiceModel\ResponseModel.cs" />
     <Compile Include="Stubby.cs" />
   </ItemGroup>
   <ItemGroup>

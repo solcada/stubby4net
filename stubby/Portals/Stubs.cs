@@ -54,29 +54,28 @@ namespace stubby.Portals {
 
         private void ResponseHandler(HttpListenerContext context) {
             
-			var found = FindEndpoint(context);
+			Response found = FindEndpoint(context);
 
 			// Download, Return and Amend Schema (if switched on).
             if (found == null && _siteToCapture != null)
 			{
 				var webClient = new WebClient();
 
-                var pathToSaveResponse = _locationToDownloadSite + context.Request.Url.AbsolutePath;
+			    var requestFileName = "";
 			    var requestAbsolutePath = context.Request.Url.AbsolutePath;
 
                 var hasExtension = Path.HasExtension(requestAbsolutePath);
 				if (!hasExtension)
 				{
-					pathToSaveResponse = pathToSaveResponse.TrimEnd('/');
-					pathToSaveResponse = pathToSaveResponse + ".html";					
+				     requestFileName = _locationToDownloadSite + context.Request.Url.AbsolutePath.TrimStart('/') + ".html";
 				}
 
-				var file = new FileInfo(pathToSaveResponse);
+                var file = new FileInfo(requestFileName);
 				if (!file.Exists)
 				{
                     var realPath = _siteToCapture + context.Request.Url.AbsolutePath;
                     file.Directory.Create();
-                    webClient.DownloadFile(realPath, pathToSaveResponse);
+                    webClient.DownloadFile(realPath, requestFileName);
 
                     // Add New EndPoint
 				    var request = new Request()
@@ -89,7 +88,7 @@ namespace stubby.Portals {
                         File = requestAbsolutePath,
 				    };
 
-				    var responses = new[]
+				    var responses = new List<Response>
 				    {
                         response
 				    };
@@ -106,7 +105,7 @@ namespace stubby.Portals {
 
 				}
 
-				found = new Response {File = pathToSaveResponse, Status = (int) HttpStatusCode.OK};
+                found = new Response { File = requestFileName, Status = (int)HttpStatusCode.OK };
 			}
 
             if(found == null) {

@@ -38,8 +38,8 @@ namespace stubby.Contracts {
             return url;
         }
 
-        private static IList<string> VerifyMethod(ICollection<string> methods) {
-            IList<string> verified = new List<string>();
+        private static List<string> VerifyMethod(ICollection<string> methods) {
+            List<string> verified = new List<string>();
 
             if(methods == null || methods.Count.Equals(0)) {
                 verified.Add("GET");

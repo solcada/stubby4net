@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
+using stubby.ServiceModel;
+using stubby.ServiceModel.Mapping;
 using YamlDotNet.RepresentationModel;
 using stubby.Domain;
 using YamlDotNet.RepresentationModel.Serialization;
@@ -33,36 +35,15 @@ namespace stubby.CLI {
         {
             _fileDirectory = Path.GetDirectoryName(filename);
 
-            IList<Endpoint> endpointsToSerialize = new List<Endpoint>();
+            List<EndPointModel> endpointsToSerialize = new List<EndPointModel>();
             foreach (var endpoint in endpoints)
             {
-                var endpointToSerialize = new Endpoint
+                var endpointToSerialize = new EndPointModel
                 {
-                    Request = new Request
-                    {
-                        File = endpoint.Request.File,
-                        Url = endpoint.Request.Url,
-                        Method = endpoint.Request.Method,
-                        Query = endpoint.Request.Query,
-                        Headers = endpoint.Request.Headers,
-                        Post = endpoint.Request.Post
-                    },
-                    Responses = new List<Response>()
+                    Request = RequestMapper.Map(endpoint.Request),
+                    Responses = ResponseMapper.Map(endpoint.Responses)
                 };
 
-                foreach (var response in endpoint.Responses)
-                {
-                    var responseToSerialize = new Response
-                    {
-                        Body = response.Body,
-                        File = response.File, 
-                        Headers = response.Headers,
-                        Latency = response.Latency,
-                        Status = response.Status
-                    };
-
-                    endpointToSerialize.Responses.Add(responseToSerialize);
-                }
                 endpointsToSerialize.Add(endpointToSerialize);
             }
 
@@ -177,7 +158,7 @@ namespace stubby.CLI {
             return methods;
         }
 
-        private static IList<Response> ParseResponses(KeyValuePair<YamlNode, YamlNode> yamlResponse){
+        private static List<Response> ParseResponses(KeyValuePair<YamlNode, YamlNode> yamlResponse){
             if(yamlResponse.Value.GetType() == typeof(YamlSequenceNode))
                 return (from response in (YamlSequenceNode) yamlResponse.Value select ParseResponse((YamlMappingNode) response)).ToList();            else
             return new List<Response> {ParseResponse((YamlMappingNode) yamlResponse.Value)};

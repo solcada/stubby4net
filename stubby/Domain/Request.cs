@@ -27,7 +27,7 @@ namespace stubby.Domain {
         /// <summary>
         /// A list of acceptable HTTP verbs such as GET or POST. Defaults to GET.
         /// </summary>
-        [DataMember] public IList<string> Method { get; set; }
+        [DataMember] public List<string> Method { get; set; }
 
         /// <summary>
         /// Name/Value headers that incoming requests must at least possess.
