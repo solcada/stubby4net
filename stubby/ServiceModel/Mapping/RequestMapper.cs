@@ -18,5 +18,20 @@ namespace stubby.ServiceModel.Mapping
 
             return requestModel;
         }
+
+        public static Request Map(RequestModel request)
+        {
+            var requestModel = new Request
+            {
+                File = request.File,
+                Url = request.Url,
+                Method = request.Method,
+                Query = request.Query.ToNameValueCollection(),
+                Headers = request.Headers.ToNameValueCollection(),
+                Post = request.Post
+            };
+
+            return requestModel;
+        }
     }
 }

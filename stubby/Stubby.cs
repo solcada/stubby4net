@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using stubby.ServiceModel;
 using YamlDotNet.Core;
 using stubby.CLI;
 using stubby.Domain;

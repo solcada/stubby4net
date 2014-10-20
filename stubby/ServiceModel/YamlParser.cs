@@ -4,19 +4,18 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
-using stubby.ServiceModel;
+using stubby.Domain;
 using stubby.ServiceModel.Mapping;
 using YamlDotNet.RepresentationModel;
-using stubby.Domain;
 using YamlDotNet.RepresentationModel.Serialization;
 
-namespace stubby.CLI {
+namespace stubby.ServiceModel {
 
     internal static class YamlParser {
         private const string CurrentDirectory = ".";
         private static string _fileDirectory = CurrentDirectory;
 
-        public static IList<Endpoint> FromFile(string filename) {
+        public static List<Endpoint> FromFile(string filename) {
             if(string.IsNullOrWhiteSpace(filename))
                 return new List<Endpoint>();
 
@@ -28,17 +27,21 @@ namespace stubby.CLI {
                 yaml.Load(streamReader);
             }
 
-            return Parse(yaml);
+            var endpointsModel = Parse(yaml);
+
+            var endPoints = EndpointMapper.Map(endpointsModel);
+
+            return endPoints;
         }
 
         public static void ToFile(string filename, IList<Endpoint> endpoints)
         {
             _fileDirectory = Path.GetDirectoryName(filename);
 
-            List<EndPointModel> endpointsToSerialize = new List<EndPointModel>();
+            List<EndpointModel> endpointsToSerialize = new List<EndpointModel>();
             foreach (var endpoint in endpoints)
             {
-                var endpointToSerialize = new EndPointModel
+                var endpointToSerialize = new EndpointModel
                 {
                     Request = RequestMapper.Map(endpoint.Request),
                     Responses = ResponseMapper.Map(endpoint.Responses)
@@ -54,7 +57,7 @@ namespace stubby.CLI {
             }
         }
 
-        public static IList<Endpoint> FromString(string data) {
+        public static List<Endpoint> FromString(string data) {
             _fileDirectory = CurrentDirectory;
 
             var yaml = new YamlStream();
@@ -63,41 +66,49 @@ namespace stubby.CLI {
                 yaml.Load(streamReader);
             }
 
-            return Parse(yaml);
+            var endpointsModel = Parse(yaml);
+            return EndpointMapper.Map(endpointsModel);
         }
 
-        private static IList<Endpoint> Parse(YamlStream yaml) {
+        private static List<EndpointModel> Parse(YamlStream yaml) {
             var yamlEndpoints = (YamlSequenceNode) yaml.Documents[0].RootNode;
 
             return (from YamlMappingNode yamlEndpoint in yamlEndpoints select ParseEndpoint(yamlEndpoint)).ToList();
         }
 
-        private static Endpoint ParseEndpoint(YamlMappingNode yamlEndpoint) {
-            var endpoint = new Endpoint();
+        private static EndpointModel ParseEndpoint(YamlMappingNode yamlEndpoint) {
+            var endpoint = new EndpointModel();
 
-            foreach(var requestResponse in yamlEndpoint.Children) {
-                switch(requestResponse.Key.ToString()) {
+            foreach (var requestResponse in yamlEndpoint.Children)
+            {
+                switch (requestResponse.Key.ToString().ToLowerInvariant())
+                {
                     case "request":
-                        {
-                            endpoint.Request = ParseRequest((YamlMappingNode) requestResponse.Value);
-                            break;
-                        }
+                    {
+                        endpoint.Request = ParseRequest((YamlMappingNode) requestResponse.Value);
+                        break;
+                    }
                     case "response":
-                        {
-                            endpoint.Responses = ParseResponses(requestResponse);
-                            break;
-                        }
+                    {
+                        endpoint.Responses = ParseResponses(requestResponse);
+                        break;
+                    }
+                    case "responses":
+                    {
+                        endpoint.Responses = ParseResponses(requestResponse);
+                        break;
+                    }
                 }
             }
 
             return endpoint;
         }
 
-        private static Request ParseRequest(YamlMappingNode yamlRequest) {
-            var request = new Request();
+        private static RequestModel ParseRequest(YamlMappingNode yamlRequest) {
+            var request = new RequestModel();
 
             foreach(var property in yamlRequest) {
-                switch(property.Key.ToString()) {
+                switch(property.Key.ToString().ToLowerInvariant()) {
                     case "url":
                         {
                             request.Url = ParseString(property);
@@ -118,16 +129,16 @@ namespace stubby.CLI {
                             request.Post = ParseString(property);
                             break;
                         }
-                    case "query":
-                        {
-                            request.Query = ParseCollection(property);
-                            break;
-                        }
-                    case "headers":
-                        {
-                            request.Headers = ParseCollection(property, false);
-                            break;
-                        }
+                    //case "query":
+                    //    {
+                    //        request.Query = ParseCollection(property);
+                    //        break;
+                    //    }
+                    //case "headers":
+                    //    {
+                    //        request.Headers = ParseCollection(property, false);
+                    //        break;
+                    //    }
                 }
             }
             return request;
@@ -158,27 +169,27 @@ namespace stubby.CLI {
             return methods;
         }
 
-        private static List<Response> ParseResponses(KeyValuePair<YamlNode, YamlNode> yamlResponse){
+        private static List<ResponseModel> ParseResponses(KeyValuePair<YamlNode, YamlNode> yamlResponse){
             if(yamlResponse.Value.GetType() == typeof(YamlSequenceNode))
                 return (from response in (YamlSequenceNode) yamlResponse.Value select ParseResponse((YamlMappingNode) response)).ToList();            else
-            return new List<Response> {ParseResponse((YamlMappingNode) yamlResponse.Value)};
+            return new List<ResponseModel> {ParseResponse((YamlMappingNode) yamlResponse.Value)};
         }
 
-        private static Response ParseResponse(YamlMappingNode yamlResponse) {
-            var response = new Response();
+        private static ResponseModel ParseResponse(YamlMappingNode yamlResponse) {
+            var response = new ResponseModel();
 
             foreach(var property in yamlResponse) {
-                switch(property.Key.ToString()) {
+                switch(property.Key.ToString().ToLowerInvariant()) {
                     case "status":
                         {
                             response.Status = ushort.Parse(property.Value.ToString());
                             break;
                         }
-                    case "headers":
-                        {
-                            response.Headers = ParseCollection(property, false);
-                            break;
-                        }
+                    //case "headers":
+                    //    {
+                    //        response.Headers = ParseCollection(property, false);
+                    //        break;
+                    //    }
                     case "latency":
                         {
                             response.Latency = ulong.Parse(property.Value.ToString());
@@ -200,7 +211,30 @@ namespace stubby.CLI {
             return response;
         }
 
-        private static NameValueCollection ParseCollection(KeyValuePair<YamlNode, YamlNode> property, bool caseSensitive = true) {
+        private static List<KeyValuePair<string,string>> ParseCollection (KeyValuePair<YamlNode, YamlNode> property, bool caseSensitive = true)
+        {
+            var keyValuePairs = (YamlMappingNode)property.Value;
+            var collection = new List<KeyValuePair<string, string>>();
+
+            foreach (var keyValuePair in keyValuePairs)
+            {
+                var key = keyValuePair.Key.ToString();
+                var value = keyValuePair.Value.ToString();
+
+                if (property.Key.ToString().Equals("headers") &&
+                    key.Equals("authorization", StringComparison.InvariantCultureIgnoreCase) && value.Contains(":"))
+                {
+                    value = value.Replace("Basic ", "");
+                    value = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+                }
+
+                collection.Add(new KeyValuePair<string, string>(caseSensitive ? key : key.ToLower(), value));
+            }
+
+            return collection;
+        }
+
+        private static NameValueCollection ParseCollection_(KeyValuePair<YamlNode, YamlNode> property, bool caseSensitive = true) {
             var keyValuePairs = (YamlMappingNode) property.Value;
             var collection = new NameValueCollection();
 

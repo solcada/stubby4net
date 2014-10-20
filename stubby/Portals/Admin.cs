@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using stubby.CLI;
 using stubby.Domain;
+using stubby.ServiceModel;
 using utils = stubby.Portals.PortalUtils;
 
 namespace stubby.Portals {
@@ -131,9 +132,10 @@ namespace stubby.Portals {
 
         private void GoPost(HttpListenerContext context) {
             var data = utils.ReadPost(context.Request);
-            IList<Endpoint> parsed;
+            List<Endpoint> parsed;
 
-            try {
+            try 
+            {
                 parsed = YamlParser.FromString(data);
             } catch {
                 utils.SetStatus(context, HttpStatusCode.BadRequest);

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using NUnit.Framework;
-using stubby.CLI;
+using stubby.ServiceModel;
 
 namespace unit {
 

@@ -15,5 +15,21 @@ namespace stubby.ServiceModel.Mapping
             }
             return dict;
         }
+
+        public static NameValueCollection ToNameValueCollection(this List<KeyValuePair<string, string>> col)
+        {
+            NameValueCollection dict = new NameValueCollection();
+            if (col == null)
+            {
+                return dict;
+            }
+
+            foreach (var k in col)
+            {
+                dict.Add(k.Key , k.Value);
+            }
+
+            return dict;
+        }
     }
 }

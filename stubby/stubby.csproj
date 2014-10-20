@@ -79,7 +79,8 @@
     <Compile Include="CLI\Arguments.cs" />
     <Compile Include="CLI\Out.cs" />
     <Compile Include="CLI\Program.cs" />
-    <Compile Include="CLI\YamlParser.cs" />
+    <Compile Include="ServiceModel\Mapping\EndpointMapper.cs" />
+    <Compile Include="ServiceModel\YamlParser.cs" />
     <Compile Include="Contracts\EndpointContract.cs" />
     <Compile Include="Domain\ComparisonUtils.cs" />
     <Compile Include="Domain\Endpoint.cs" />

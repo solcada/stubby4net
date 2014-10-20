@@ -49,9 +49,18 @@ namespace stubby.Domain {
         /// </summary>
         [DataMember] public string File { get; set; }
 
-        internal bool Matches(Request other) {
-            if(!Regex.IsMatch(other.Url, Url))
+        internal bool Matches(Request other) 
+        {
+            //if (!Regex.IsMatch(other.Url, Url))
+            //{
+            //    return false;
+            //}
+
+            if (!string.Equals(other.Url, Url))
+            {
                 return false;
+            }
+                
             if(!Method.Contains(other.Method[0]))
                 return false;
 

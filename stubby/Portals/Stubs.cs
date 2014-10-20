@@ -5,9 +5,9 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
-using System.Net.Mime;
 using stubby.CLI;
 using stubby.Domain;
+using stubby.ServiceModel;
 using utils = stubby.Portals.PortalUtils;
 
 namespace stubby.Portals {
@@ -52,8 +52,10 @@ namespace stubby.Portals {
             utils.PrintListening(Name, location, httpsPort);
         }
 
-        private void ResponseHandler(HttpListenerContext context) {
-            
+        private void ResponseHandler(HttpListenerContext context)
+        {
+            var rar = context.Request.Url;
+
 			Response found = FindEndpoint(context);
 
 			// Download, Return and Amend Schema (if switched on).
@@ -62,15 +64,17 @@ namespace stubby.Portals {
 				var webClient = new WebClient();
 
 			    var requestFileName = "";
+                var relativeFileName = "";
 			    var requestAbsolutePath = context.Request.Url.AbsolutePath;
 
                 var hasExtension = Path.HasExtension(requestAbsolutePath);
-				if (!hasExtension)
-				{
-				     requestFileName = _locationToDownloadSite + context.Request.Url.AbsolutePath.TrimStart('/') + ".html";
-				}
+			    if (!hasExtension)
+			    {
+			        requestFileName = _locationToDownloadSite + context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + ".html";
+                    relativeFileName = context.Request.Url.AbsolutePath.TrimStart('/').TrimEnd('/') + ".html";
+			    }
 
-                var file = new FileInfo(requestFileName);
+			    var file = new FileInfo(requestFileName);
 				if (!file.Exists)
 				{
                     var realPath = _siteToCapture + context.Request.Url.AbsolutePath;
@@ -85,7 +89,7 @@ namespace stubby.Portals {
 
 				    var response = new Response()
 				    {
-                        File = requestAbsolutePath,
+                        File = relativeFileName,
 				    };
 
 				    var responses = new List<Response>

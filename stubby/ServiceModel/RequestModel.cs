@@ -9,7 +9,7 @@ namespace stubby.ServiceModel
         /// <summary>
         /// A list of acceptable HTTP verbs such as GET or POST. Defaults to GET.
         /// </summary>
-        public IList<string> Method { get; set; }
+        public List<string> Method { get; set; }
 
         /// <summary>
         /// Name/Value headers that incoming requests must at least possess.
